@@ -1,95 +1,59 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+
+'use client'
+import Grid from './modules/Grid/index';
+import GridClass from './Grid.class';
+import { useEffect, useState } from 'react';
+import { setGrid } from './redux/grid.slice';
+import { useDispatch } from 'react-redux';
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+  const grid = new GridClass();
+  const dispatch = useDispatch();
+  const [rows, setRows] = useState(0);
+  const [cols, setCols] = useState(0);
+  const [bombs, setBombs] = useState(0);
+  const [temp, setTemp] = useState(false);
+
+  useEffect(() => {
+    console.log('chasgg', grid.isGridInstanceValid());
+  }, [grid.isGridInstanceValid()]);
+
+  const handleInputChange = (key: 'rows' | 'cols' | 'bombs') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (key === 'bombs') setBombs(parseInt(e?.target?.value, 10));
+    if (key === 'cols') setCols(parseInt(e?.target?.value, 10));
+    if (key === 'rows') setRows(parseInt(e?.target?.value, 10));
+  }
+
+  const handleSetGrid = () => {
+    const gridCells = grid.initializGrid(rows, cols, bombs);
+    setTemp(!temp)
+    dispatch(setGrid(gridCells));
+  }
+  
+  if (grid.isGridInstanceValid()) {
+    return (
+      <main style={{ height: '100vh' }}>
+        <div style={{ height: '100%', width: 'auto', background: '#192025' }}>
+          <Grid />
         </div>
+      </main>
+    )
+  }
+  return (
+    <div>
+      <div>
+        <label>Enter rows </label>
+        <input placeholder='rows' value={rows} onChange={handleInputChange('rows')}/>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div>
+        <label>Enter columns </label>
+        <input placeholder='columns' value={cols} onChange={handleInputChange('cols')}/>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div>
+        <label>Enter bombs </label>
+        <input placeholder='bombs' value={bombs} onChange={handleInputChange('bombs')}/>
       </div>
-    </main>
+      <button onClick={handleSetGrid}>Set Grid</button>
+    </div>
   )
 }

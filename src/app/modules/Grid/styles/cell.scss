@@ -1,0 +1,23 @@
+.cell {
+    &__container {
+        height: 36px;
+        width: 36px;
+        // padding: 4px;
+        margin: 0px 4px 4px 0px;
+        border: none;
+        border-radius: 2px;
+    }
+    &__opened {
+        @extend .cell__container;
+        background: white;
+        font-weight: bold;
+        font-size: 20px
+    }
+    &__unOpened {
+        @extend .cell__container;
+        background: #00a5f3;
+    }
+    &__flagged {
+        @extend .cell__container;
+    }
+}
