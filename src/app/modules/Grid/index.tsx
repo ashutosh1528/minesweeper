@@ -1,15 +1,17 @@
 'use client'
 import Cell from './components/Cell';
-import GridClass from '../../Grid.class';
 import './styles/index.scss';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/redux/store';
 
 const Grid = () => {
-    const gridC = new GridClass();
+    const grid = useSelector((state: RootState) => state.grid.gridCells);
+
     return (
         <div className='grid__container'>
-            {gridC.getGrid().map((rows, rowIndex) => {
+            {grid.map((rows, rowIndex) => {
                 return (
-                    <div className='grid__container__row'>
+                    <div className='grid__container__row' key={`${rowIndex}-key`}>
                         {rows.map((cell, colIndex) => <Cell rowIndex={rowIndex} colIndex={colIndex } key={`${cell.id}-key`} />)}
                     </div>
                 )

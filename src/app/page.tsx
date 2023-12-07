@@ -1,36 +1,29 @@
 
 'use client'
 import Grid from './modules/Grid/index';
-import GridClass from './Grid.class';
-import { useEffect, useState } from 'react';
-import { setGrid } from './redux/grid.slice';
-import { useDispatch } from 'react-redux';
+import { useState } from 'react';
+import { initializeGrid } from './redux/grid.slice';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from './redux/store';
 
 export default function Home() {
-  const grid = new GridClass();
   const dispatch = useDispatch();
-  const [rows, setRows] = useState(0);
-  const [cols, setCols] = useState(0);
-  const [bombs, setBombs] = useState(0);
-  const [temp, setTemp] = useState(false);
-
-  useEffect(() => {
-    console.log('chasgg', grid.isGridInstanceValid());
-  }, [grid.isGridInstanceValid()]);
+  const grid = useSelector((state: RootState) => state.grid.gridCells);
+  const [rows, setRows] = useState('');
+  const [cols, setCols] = useState('');
+  const [bombs, setBombs] = useState('');
 
   const handleInputChange = (key: 'rows' | 'cols' | 'bombs') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (key === 'bombs') setBombs(parseInt(e?.target?.value, 10));
-    if (key === 'cols') setCols(parseInt(e?.target?.value, 10));
-    if (key === 'rows') setRows(parseInt(e?.target?.value, 10));
+    if (key === 'bombs') setBombs(e?.target?.value);
+    if (key === 'cols') setCols(e?.target?.value);
+    if (key === 'rows') setRows(e?.target?.value);
   }
 
   const handleSetGrid = () => {
-    const gridCells = grid.initializGrid(rows, cols, bombs);
-    setTemp(!temp)
-    dispatch(setGrid(gridCells));
+    dispatch(initializeGrid({ columns: parseInt(cols, 10), rows: parseInt(rows, 10), totalBombs: parseInt(bombs, 10) }));
   }
   
-  if (grid.isGridInstanceValid()) {
+  if (grid?.[0]?.[0]) {
     return (
       <main style={{ height: '100vh' }}>
         <div style={{ height: '100%', width: 'auto', background: '#192025' }}>

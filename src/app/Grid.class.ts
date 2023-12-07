@@ -2,26 +2,12 @@ import { v4 as uuidv4 } from 'uuid';
 let instance:Grid;
 
 class Grid {
-    private grid:Array<Array<{ number: number, open: boolean, id: string }>> = [[]];
+    private grid:Array<Array<{ number: number, isOpen: boolean, id: string }>> = [[]];
     private rows = 0;
     private columns = 0;
     private totalBombs = 0;
     constructor() {
         if (instance) return instance;
-        // if (rows && columns && totalBombs) {
-        //     if (totalBombs > rows * columns) {
-        //         totalBombs = rows * columns;
-        //     }
-        //     this.rows = rows;
-        //     this.columns = columns;
-        //     this.totalBombs = totalBombs;
-        //     const g = Array(rows).fill(0).map(() => Array(columns).fill({ number: 0, open: false, id: ''}));
-        //     this.grid = g;
-        //     this.fillbombs();
-        //     this.fillDigits();
-        //     instance = this;
-        // }
-        // return
     }
 
     private fillbombs = () => {
@@ -43,7 +29,7 @@ class Grid {
             for(let c = 0; c<this.columns; c+=1) {
                 // temp code 
                 const o = { ...this.grid[r][c] }
-                o.open = Math.floor((Math.random() * 2)) === 1;
+                o.isOpen = Math.floor((Math.random() * 2)) === 1;
                 this.grid[r][c] = o;
                 o.id = uuidv4();
                 if (this.grid[r][c].number === -1) {
@@ -73,21 +59,51 @@ class Grid {
     }
 
     initializGrid = (rows: number, columns: number, totalBombs: number) => {
-        if (rows && columns && totalBombs) {
-            if (totalBombs > rows * columns) {
-                totalBombs = rows * columns;
+        
+    }
+
+    openCell = (rowIndex: number, colIndex: number, grid: Array<Array<{ number: number, isOpen: boolean, id: string }>>) => {
+        if (rowIndex < this.rows && colIndex < this.columns) {
+            if (grid[rowIndex][colIndex].number === 0) {
+                this.openCell(rowIndex -1, colIndex-1, grid);
+                this.openCell(rowIndex -1, colIndex, grid);
+                this.openCell(rowIndex -1, colIndex+1, grid);
+                this.openCell(rowIndex, colIndex-1, grid);
+                this.openCell(rowIndex, colIndex+1, grid);
+                this.openCell(rowIndex +1, colIndex-1, grid);
+                this.openCell(rowIndex +1, colIndex, grid);
+                this.openCell(rowIndex +1, colIndex+1, grid);
             }
-            this.rows = rows;
-            this.columns = columns;
-            this.totalBombs = totalBombs;
-            const g = Array(rows).fill(0).map(() => Array(columns).fill({ number: 0, open: false, id: ''}));
-            this.grid = g;
-            this.fillbombs();
-            this.fillDigits();
-            instance = this;
-            return this.grid;
+            grid[rowIndex][colIndex].isOpen = true;
+            return grid;
         }
-        return [];
+        return grid
+    }
+
+    handleCellOpen = (rowIndex: number, colIndex: number) => {
+        let currentGrid = [...this.grid];
+        let clickCell = { ...currentGrid[rowIndex][colIndex]};
+        console.log(clickCell);
+        if (clickCell?.number === -1) {
+            return {
+                isSuccess: false,
+                grid: currentGrid,
+            }
+        } else if (clickCell?.number !== 0) {
+            clickCell.isOpen = true;
+            currentGrid[rowIndex][colIndex] = clickCell
+            return {
+                isSuccess: true,
+                grid: currentGrid,
+            }
+        } else {
+            let temp = this.openCell(rowIndex, colIndex, currentGrid);
+            return {
+                isSuccess: true,
+                grid: temp
+            }
+        }
+        // this.openCell(rowIndex, colIndex, currentGrid);
     }
 
     getRows = () => {

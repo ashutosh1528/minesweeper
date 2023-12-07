@@ -1,12 +1,32 @@
 'use client'
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import '../styles/cell.scss';
 import { RootState } from '@/app/redux/store';
+import { handleCellOpen, handleCellDoubleClick, handleCellFlagging, handleCellDeFlagging } from '@/app/redux/grid.slice';
 
 const Cell = ({ rowIndex, colIndex }: { rowIndex: number, colIndex: number }) => {
-    const { id, number, open } = useSelector((state: RootState) => state?.grid?.gridCells?.[rowIndex]?.[colIndex])
+    const dispatch = useDispatch();
+    const { id, number, isOpen, isFlagged } = useSelector((state: RootState) => state?.grid?.gridCells?.[rowIndex]?.[colIndex])
     const handleCellClick = () => {
-        console.log(number, open, id)
+        console.log(number, isOpen, id)
+    }
+
+    const handleOpenCell = () => {
+        dispatch(handleCellOpen({ colIndex, rowIndex }))
+    }
+
+    const handleDoubleClickOpen = () => {
+        dispatch(handleCellDoubleClick({ colIndex, rowIndex }))
+    }
+
+    const handleRightClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dispatch(handleCellFlagging({ colIndex, rowIndex }));
+    }
+
+    const handleFlagClick = () => {
+        dispatch(handleCellDeFlagging({ colIndex, rowIndex }));
     }
 
     const numberToColor = {
@@ -21,13 +41,18 @@ const Cell = ({ rowIndex, colIndex }: { rowIndex: number, colIndex: number }) =>
     };
 
     const getButton = () => {
-        if (open) {
+        if (isFlagged) {
             return (
-                <button className='cell__opened' style={{ color: numberToColor[number.toString() as keyof typeof numberToColor ]}} onClick={handleCellClick}>{number || ''}</button>
+                <button className='cell__unOpened' onClick={handleFlagClick}>F</button>
+            )
+        }
+        if (isOpen) {
+            return (
+                <button className='cell__opened' onDoubleClickCapture={handleDoubleClickOpen} style={{ color: numberToColor[number.toString() as keyof typeof numberToColor ]}}>{number || ''}</button>
             )
         }
         return (
-            <button className='cell__unOpened' onClick={handleCellClick}></button>
+            <button className='cell__unOpened' onContextMenuCapture={handleRightClick} onClick={handleOpenCell}></button>
         )
     }
     return (
