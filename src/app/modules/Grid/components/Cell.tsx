@@ -43,7 +43,7 @@ const Cell = ({ rowIndex, colIndex }: { rowIndex: number, colIndex: number }) =>
     const getButton = () => {
         if (isFlagged) {
             return (
-                <button className='cell__unOpened' onClick={handleFlagClick}>F</button>
+                <button className='cell__flagged' onClick={handleFlagClick}><img src="/minesweeper_flag.webp" alt='F' width="100%" height="100%" /></button>
             )
         }
         if (isOpen) {
@@ -58,7 +58,6 @@ const Cell = ({ rowIndex, colIndex }: { rowIndex: number, colIndex: number }) =>
     return (
         <>
             {getButton()}
-            {/* <button onClick={handleCellClick}>{getCellContent()}</button> */}
         </>
     )
 }
