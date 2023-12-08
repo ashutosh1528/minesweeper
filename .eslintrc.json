@@ -11,7 +11,10 @@
     "ecmaVersion": 12,
     "sourceType": "module",
     "rules": {
-      "@typescript-eslint/no-unused-vars": ["warn"]
+      "overrides": {
+        "no-unused-vars": 1,
+        "@typescript-eslint/no-unused-vars": 1
+      }
     }
   }
 }

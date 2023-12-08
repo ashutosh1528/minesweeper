@@ -2,7 +2,6 @@
   &__container {
     height: 36px;
     width: 36px;
-    // padding: 4px;
     margin: 0px 4px 4px 0px;
     border: none;
     border-radius: 2px;
@@ -19,6 +18,10 @@
   }
   &__flagged {
     @extend .cell__container;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2px;
     background: #ffbf00;
   }
 }

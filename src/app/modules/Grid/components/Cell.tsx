@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useDispatch, useSelector } from "react-redux";
 import "../styles/cell.scss";
@@ -12,15 +11,9 @@ import {
 
 const Cell = ({ rowIndex, colIndex }: { rowIndex: number; colIndex: number }) => {
   const dispatch = useDispatch();
-
-  const x = 10;
-  const { id, number, isOpen, isFlagged } = useSelector(
+  const { number, isOpen, isFlagged } = useSelector(
     (state: RootState) => state?.grid?.gridCells?.[rowIndex]?.[colIndex]
   );
-
-  const handleCellClick = () => {
-    console.log(number, isOpen, id);
-  };
 
   const handleOpenCell = () => {
     dispatch(handleCellOpen({ colIndex, rowIndex }));
@@ -55,7 +48,7 @@ const Cell = ({ rowIndex, colIndex }: { rowIndex: number; colIndex: number }) =>
     if (isFlagged) {
       return (
         <button className="cell__flagged" onClick={handleFlagClick}>
-          <img src="/minesweeper_flag.webp" alt="F" width="100%" height="100%" />
+          <img src="/minesweeper_flag.webp" alt="F" style={{ width: "90%", height: "90%" }} />
         </button>
       );
     }

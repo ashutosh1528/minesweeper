@@ -8,5 +8,17 @@
     &__row {
       display: flex;
     }
+    &__label {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      color: white;
+    }
+  }
+  &__timeLabel {
+    padding: 10px;
+  }
+  &__bombLabel {
+    padding: 10px;
   }
 }

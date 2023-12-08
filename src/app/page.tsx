@@ -7,7 +7,7 @@ import { RootState } from "./redux/store";
 
 export default function Home() {
   const dispatch = useDispatch();
-  const grid = useSelector((state: RootState) => state.grid.gridCells);
+  const isGameStarted = useSelector((state: RootState) => state.grid.gameStatus.isStarted);
   const [rows, setRows] = useState("");
   const [cols, setCols] = useState("");
   const [bombs, setBombs] = useState("");
@@ -24,7 +24,7 @@ export default function Home() {
     );
   };
 
-  if (grid?.[0]?.[0]) {
+  if (isGameStarted) {
     return (
       <main style={{ height: "100vh" }}>
         <div style={{ height: "100%", width: "auto", background: "#192025" }}>

@@ -12,12 +12,26 @@ type GridState = {
   gridCells: Array<Array<Cell>>;
   rows: number;
   columns: number;
+  totalBombs: number;
+  totalFlagged: number;
+  gameStatus: {
+    isStarted: boolean;
+    isWin: boolean;
+    isEnded: boolean;
+  };
 };
 
 const initialState: GridState = {
   gridCells: [[]],
   rows: 0,
   columns: 0,
+  totalBombs: 0,
+  totalFlagged: 0,
+  gameStatus: {
+    isStarted: false,
+    isWin: false,
+    isEnded: false,
+  },
 };
 
 const fillbombs = (rows: number, columns: number, totalBombs: number, grid: GridState["gridCells"]) => {
@@ -68,7 +82,6 @@ const fillSurrounding = (bombR: number, bombC: number, rows: number, columns: nu
 };
 
 const openCell = (rowIndex: number, colIndex: number, grid: Array<Array<Cell>>, rows: number, columns: number) => {
-  console.log("here ?");
   const inGrid = rowIndex >= 0 && colIndex >= 0 && rowIndex < rows && colIndex < columns;
   const isFlagged = grid?.[rowIndex]?.[colIndex]?.isFlagged === true;
   const isOpen = grid?.[rowIndex]?.[colIndex]?.isOpen === true;
@@ -144,6 +157,7 @@ export const gridSlice = createSlice({
         }
         state.rows = rows;
         state.columns = columns;
+        state.totalBombs = totalBombs;
         const g = Array(rows)
           .fill(0)
           .map(() =>
@@ -156,6 +170,7 @@ export const gridSlice = createSlice({
           );
         fillbombs(rows, columns, totalBombs, g);
         fillDigits(rows, columns, g);
+        state.gameStatus.isStarted = true;
         state.gridCells = g;
       }
     },
@@ -164,17 +179,20 @@ export const gridSlice = createSlice({
       const currentGrid = [...state.gridCells];
       const { rowIndex, colIndex } = action.payload;
       const clickCell = { ...currentGrid[rowIndex][colIndex] };
-      if (clickCell?.number !== 0) {
-        clickCell.isOpen = true;
-        currentGrid[rowIndex][colIndex] = clickCell;
-        state.gridCells = currentGrid;
+      if (clickCell.number === -1) {
+        // state.isGameEnded = true;
       } else {
-        const temp = openCell(rowIndex, colIndex, currentGrid, state.rows, state.columns);
-        state.gridCells = temp;
+        if (clickCell?.number !== 0) {
+          clickCell.isOpen = true;
+          currentGrid[rowIndex][colIndex] = clickCell;
+          state.gridCells = currentGrid;
+        } else {
+          const temp = openCell(rowIndex, colIndex, currentGrid, state.rows, state.columns);
+          state.gridCells = temp;
+        }
       }
     },
     handleCellDoubleClick: (state, action: PayloadAction<CellIndex>) => {
-      console.log(action.payload);
       const { rowIndex, colIndex } = action.payload;
       state.gridCells = openSurrounding(rowIndex, colIndex, [...state.gridCells], state.rows, state.columns);
     },
@@ -182,12 +200,15 @@ export const gridSlice = createSlice({
       const currentGrid = [...state.gridCells];
       const { colIndex, rowIndex } = action.payload;
       currentGrid[rowIndex][colIndex].isFlagged = true;
+      state.totalFlagged += 1;
       state.gridCells = currentGrid;
     },
     handleCellDeFlagging: (state, action: PayloadAction<CellIndex>) => {
       const currentGrid = [...state.gridCells];
       const { colIndex, rowIndex } = action.payload;
+      state.totalFlagged -= 1;
       currentGrid[rowIndex][colIndex].isFlagged = false;
+      state.gridCells = currentGrid;
     },
   },
 });
