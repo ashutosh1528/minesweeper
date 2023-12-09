@@ -19,6 +19,7 @@ type GridState = {
     isWin: boolean;
     isEnded: boolean;
   };
+  totalOpened: number;
 };
 
 const initialState: GridState = {
@@ -32,6 +33,7 @@ const initialState: GridState = {
     isWin: false,
     isEnded: false,
   },
+  totalOpened: 0,
 };
 
 const fillbombs = (rows: number, columns: number, totalBombs: number, grid: GridState["gridCells"]) => {
@@ -81,53 +83,81 @@ const fillSurrounding = (bombR: number, bombC: number, rows: number, columns: nu
   }
 };
 
-const openCell = (rowIndex: number, colIndex: number, grid: Array<Array<Cell>>, rows: number, columns: number) => {
+// Fucker function !!
+const openCell = (
+  rowIndex: number,
+  colIndex: number,
+  grid: GridState["gridCells"],
+  rows: number,
+  columns: number,
+  opened: number
+) => {
   const inGrid = rowIndex >= 0 && colIndex >= 0 && rowIndex < rows && colIndex < columns;
   const isFlagged = grid?.[rowIndex]?.[colIndex]?.isFlagged === true;
   const isOpen = grid?.[rowIndex]?.[colIndex]?.isOpen === true;
-  if (!inGrid || isFlagged || isOpen) return grid;
+  if (!inGrid || isFlagged || isOpen) {
+    return { grid, opened };
+  }
 
   const isZero = grid[rowIndex][colIndex].number === 0;
-  if (!isZero && !isOpen) {
+  if (!isZero) {
     grid[rowIndex][colIndex].isOpen = true;
-    return grid;
+    opened += 1;
+    return { grid, opened };
   }
 
-  if (inGrid && !isOpen && isZero) {
-    grid[rowIndex][colIndex].isOpen = true;
-    grid = openCell(rowIndex - 1, colIndex - 1, grid, rows, columns);
-    grid = openCell(rowIndex - 1, colIndex, grid, rows, columns);
-    grid = openCell(rowIndex - 1, colIndex + 1, grid, rows, columns);
-    grid = openCell(rowIndex, colIndex - 1, grid, rows, columns);
-    grid = openCell(rowIndex, colIndex + 1, grid, rows, columns);
-    grid = openCell(rowIndex + 1, colIndex - 1, grid, rows, columns);
-    grid = openCell(rowIndex + 1, colIndex, grid, rows, columns);
-    grid = openCell(rowIndex + 1, colIndex + 1, grid, rows, columns);
+  grid[rowIndex][colIndex].isOpen = true;
+  opened += 1;
+  for (let r = -1; r < 2; r += 1) {
+    for (let c = -1; c < 2; c += 1) {
+      const tR = rowIndex + r;
+      const tC = colIndex + c;
+      if (
+        tR >= 0 &&
+        tC >= 0 &&
+        tR < rows &&
+        tC < columns &&
+        (tC !== colIndex || tR !== rowIndex) &&
+        !grid[tR][tC].isOpen
+      ) {
+        const { opened: y } = openCell(tR, tC, grid, rows, columns, opened);
+        opened = y;
+      }
+    }
   }
-  return grid;
+  return { grid, opened };
 };
 
 const openSurrounding = (
   rowIndex: number,
   colIndex: number,
-  grid: Array<Array<Cell>>,
+  grid: GridState["gridCells"],
   rows: number,
   columns: number
 ) => {
+  let openCount = 0;
   for (let r = -1; r < 2; r += 1) {
     for (let c = -1; c < 2; c += 1) {
       const tR = rowIndex + r;
       const tC = colIndex + c;
       if (tR >= 0 && tC >= 0 && tR < rows && tC < columns && (tC !== colIndex || tR !== rowIndex)) {
-        const o = { ...grid[tR][tC] };
+        const o = grid[tR][tC];
         // check for bomb !!
-        o.isOpen = true;
-        if (o.number === 0) grid = openCell(tR, tC, grid, rows, columns);
-        grid[tR][tC] = o;
+        if (!o.isOpen && !o.isFlagged && o.number !== -1) {
+          // check for bomb !!
+          if (o.number === 0) {
+            const { opened: c } = openCell(tR, tC, grid, rows, columns, 0);
+            openCount += c;
+          } else {
+            o.isOpen = true;
+            openCount += 1;
+          }
+          grid[tR][tC] = o;
+        }
       }
     }
   }
-  return grid;
+  return { grid, openCount: openCount };
 };
 
 export const gridSlice = createSlice({
@@ -186,15 +216,24 @@ export const gridSlice = createSlice({
           clickCell.isOpen = true;
           currentGrid[rowIndex][colIndex] = clickCell;
           state.gridCells = currentGrid;
+          state.totalOpened += 1;
         } else {
-          const temp = openCell(rowIndex, colIndex, currentGrid, state.rows, state.columns);
-          state.gridCells = temp;
+          const temp = openCell(rowIndex, colIndex, currentGrid, state.rows, state.columns, state.totalOpened);
+          state.totalOpened = temp.opened;
         }
       }
     },
     handleCellDoubleClick: (state, action: PayloadAction<CellIndex>) => {
       const { rowIndex, colIndex } = action.payload;
-      state.gridCells = openSurrounding(rowIndex, colIndex, [...state.gridCells], state.rows, state.columns);
+      const { grid: _grid, openCount } = openSurrounding(
+        rowIndex,
+        colIndex,
+        [...state.gridCells],
+        state.rows,
+        state.columns
+      );
+      state.gridCells = _grid;
+      state.totalOpened += openCount;
     },
     handleCellFlagging: (state, action: PayloadAction<CellIndex>) => {
       const currentGrid = [...state.gridCells];
