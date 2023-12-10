@@ -42,7 +42,9 @@ const fillbombs = (rows: number, columns: number, totalBombs: number, grid: Grid
     const x = Math.floor(Math.random() * rows);
     const y = Math.floor(Math.random() * columns);
     if (grid[x][y].number === 0) {
-      grid[x][y].number = -1;
+      const o = { ...grid[x][y] };
+      o.number = -1;
+      grid[x][y] = o;
       temp += 1;
     }
   }

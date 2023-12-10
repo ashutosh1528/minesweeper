@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useDispatch, useSelector } from "react-redux";
 import "../styles/cell.scss";
@@ -6,9 +7,7 @@ import { handleCellOpen, handleCellDoubleClick, handleCellFlagging } from "@/app
 
 const Cell = ({ rowIndex, colIndex }: { rowIndex: number; colIndex: number }) => {
   const dispatch = useDispatch();
-  const { number, isOpen, isFlagged } = useSelector(
-    (state: RootState) => state?.grid?.gridCells?.[rowIndex]?.[colIndex]
-  );
+  const { number, isOpen, isFlagged } = useSelector((state: RootState) => state.grid.gridCells[rowIndex][colIndex]);
 
   const handleOpenCell = () => {
     dispatch(handleCellOpen({ colIndex, rowIndex }));
