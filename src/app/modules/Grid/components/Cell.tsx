@@ -2,12 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import "../styles/cell.scss";
 import { RootState } from "@/app/redux/store";
-import {
-  handleCellOpen,
-  handleCellDoubleClick,
-  handleCellFlagging,
-  handleCellDeFlagging,
-} from "@/app/redux/grid.slice";
+import { handleCellOpen, handleCellDoubleClick, handleCellFlagging } from "@/app/redux/grid.slice";
 
 const Cell = ({ rowIndex, colIndex }: { rowIndex: number; colIndex: number }) => {
   const dispatch = useDispatch();
@@ -26,11 +21,11 @@ const Cell = ({ rowIndex, colIndex }: { rowIndex: number; colIndex: number }) =>
   const handleRightClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch(handleCellFlagging({ colIndex, rowIndex }));
+    dispatch(handleCellFlagging({ colIndex, rowIndex, flag: true }));
   };
 
   const handleFlagClick = () => {
-    dispatch(handleCellDeFlagging({ colIndex, rowIndex }));
+    dispatch(handleCellFlagging({ colIndex, rowIndex, flag: false }));
   };
 
   const numberToColor = {

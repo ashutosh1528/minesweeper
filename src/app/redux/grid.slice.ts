@@ -42,9 +42,7 @@ const fillbombs = (rows: number, columns: number, totalBombs: number, grid: Grid
     const x = Math.floor(Math.random() * rows);
     const y = Math.floor(Math.random() * columns);
     if (grid[x][y].number === 0) {
-      const o = { ...grid[x][y] };
-      o.number = -1;
-      grid[x][y] = o;
+      grid[x][y].number = -1;
       temp += 1;
     }
   }
@@ -52,12 +50,9 @@ const fillbombs = (rows: number, columns: number, totalBombs: number, grid: Grid
 
 const fillDigits = (rows: number, columns: number, grid: GridState["gridCells"]) => {
   const tempGrid = JSON.parse(JSON.stringify(grid));
-  const set = new Set();
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < columns; c += 1) {
-      const x = uuidv4();
-      set.add(x);
-      tempGrid[r][c].id = x;
+      tempGrid[r][c].id = uuidv4();
       if (tempGrid[r][c].number === -1) {
         fillSurrounding(r, c, rows, columns, tempGrid);
       }
@@ -79,9 +74,7 @@ const fillSurrounding = (bombR: number, bombC: number, rows: number, columns: nu
         (tC !== bombC || tR !== bombR) &&
         grid[tR][tC].number !== -1
       ) {
-        const o = { ...grid[tR][tC] };
-        o.number += 1;
-        grid[tR][tC] = o;
+        grid[tR][tC].number += 1;
       }
     }
   }
@@ -100,14 +93,14 @@ const openCell = (
   const isFlagged = grid?.[rowIndex]?.[colIndex]?.isFlagged === true;
   const isOpen = grid?.[rowIndex]?.[colIndex]?.isOpen === true;
   if (!inGrid || isFlagged || isOpen) {
-    return { grid, opened };
+    return opened;
   }
 
   const isZero = grid[rowIndex][colIndex].number === 0;
   if (!isZero) {
     grid[rowIndex][colIndex].isOpen = true;
     opened += 1;
-    return { grid, opened };
+    return opened;
   }
 
   grid[rowIndex][colIndex].isOpen = true;
@@ -124,12 +117,11 @@ const openCell = (
         (tC !== colIndex || tR !== rowIndex) &&
         !grid[tR][tC].isOpen
       ) {
-        const { opened: y } = openCell(tR, tC, grid, rows, columns, opened);
-        opened = y;
+        opened = openCell(tR, tC, grid, rows, columns, opened);
       }
     }
   }
-  return { grid, opened };
+  return opened;
 };
 
 const openSurrounding = (
@@ -152,8 +144,7 @@ const openSurrounding = (
           break;
         } else if (!o.isOpen && !o.isFlagged) {
           if (o.number === 0) {
-            const { opened: c } = openCell(tR, tC, grid, rows, columns, 0);
-            openCount += c;
+            openCount += openCell(tR, tC, grid, rows, columns, 0);
           } else {
             o.isOpen = true;
             openCount += 1;
@@ -211,7 +202,6 @@ export const gridSlice = createSlice({
       }
     },
     handleCellOpen: (state, action: PayloadAction<CellIndex>) => {
-      // check for bomb !
       const { rowIndex, colIndex } = action.payload;
       const clickCell = state.gridCells[rowIndex][colIndex];
       if (clickCell.number === -1) {
@@ -227,8 +217,7 @@ export const gridSlice = createSlice({
           state.gameStatus.isWin = true;
         }
       } else {
-        const temp = openCell(rowIndex, colIndex, state.gridCells, state.rows, state.columns, state.totalOpened);
-        state.totalOpened = temp.opened;
+        state.totalOpened = openCell(rowIndex, colIndex, state.gridCells, state.rows, state.columns, state.totalOpened);
         if (state.rows * state.columns - state.totalBombs === state.totalOpened) {
           state.gameStatus.isEnded = true;
           state.gameStatus.isWin = true;
@@ -255,30 +244,15 @@ export const gridSlice = createSlice({
         }
       }
     },
-    handleCellFlagging: (state, action: PayloadAction<CellIndex>) => {
-      const currentGrid = [...state.gridCells];
-      const { colIndex, rowIndex } = action.payload;
-      currentGrid[rowIndex][colIndex].isFlagged = true;
-      state.totalFlagged += 1;
-      state.gridCells = currentGrid;
-    },
-    handleCellDeFlagging: (state, action: PayloadAction<CellIndex>) => {
-      const currentGrid = [...state.gridCells];
-      const { colIndex, rowIndex } = action.payload;
-      state.totalFlagged -= 1;
-      currentGrid[rowIndex][colIndex].isFlagged = false;
-      state.gridCells = currentGrid;
+    handleCellFlagging: (state, action: PayloadAction<CellIndex & { flag: boolean }>) => {
+      const { colIndex, rowIndex, flag } = action.payload;
+      state.gridCells[rowIndex][colIndex].isFlagged = flag;
+      if (flag) state.totalFlagged += 1;
+      else state.totalFlagged -= 1;
     },
   },
 });
 
-export const {
-  setGrid,
-  setGridCell,
-  initializeGrid,
-  handleCellOpen,
-  handleCellDoubleClick,
-  handleCellFlagging,
-  handleCellDeFlagging,
-} = gridSlice.actions;
+export const { setGrid, setGridCell, initializeGrid, handleCellOpen, handleCellDoubleClick, handleCellFlagging } =
+  gridSlice.actions;
 export default gridSlice.reducer;

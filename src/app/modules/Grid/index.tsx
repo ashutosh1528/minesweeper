@@ -3,7 +3,7 @@ import "./styles/index.scss";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/redux/store";
 import Timer from "./components/Timer";
-import { useEffect, useState, memo } from "react";
+import { useState } from "react";
 import Stats from "./components/Stats";
 import Cell from "./components/Cell";
 
@@ -19,10 +19,6 @@ const Grid = () => {
           .map((_, colIndex) => <Cell rowIndex={rowIndex} colIndex={colIndex} key={`${rowIndex}-${colIndex}`} />)
       )
   );
-
-  useEffect(() => {
-    console.log("Grid rerendered");
-  });
 
   return (
     <div className="grid__container">
@@ -47,4 +43,4 @@ const Grid = () => {
   );
 };
 
-export default memo(Grid);
+export default Grid;
