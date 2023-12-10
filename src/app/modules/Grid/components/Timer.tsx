@@ -1,11 +1,14 @@
+import { RootState } from "@/app/redux/store";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 const Timer = () => {
+  const isEnded = useSelector((state: RootState) => state?.grid?.gameStatus.isEnded);
   const [sec, setSec] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSec(sec + 1);
+      if (!isEnded) setSec(sec + 1);
     }, 1000);
     return () => clearInterval(timer);
   });

@@ -51,15 +51,19 @@ const fillbombs = (rows: number, columns: number, totalBombs: number, grid: Grid
 };
 
 const fillDigits = (rows: number, columns: number, grid: GridState["gridCells"]) => {
+  const tempGrid = JSON.parse(JSON.stringify(grid));
+  const set = new Set();
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < columns; c += 1) {
-      const o = { ...grid[r][c] };
-      o.id = uuidv4();
-      if (grid[r][c].number === -1) {
-        fillSurrounding(r, c, rows, columns, grid);
+      const x = uuidv4();
+      set.add(x);
+      tempGrid[r][c].id = x;
+      if (tempGrid[r][c].number === -1) {
+        fillSurrounding(r, c, rows, columns, tempGrid);
       }
     }
   }
+  return tempGrid;
 };
 
 const fillSurrounding = (bombR: number, bombC: number, rows: number, columns: number, grid: GridState["gridCells"]) => {
@@ -136,15 +140,17 @@ const openSurrounding = (
   columns: number
 ) => {
   let openCount = 0;
+  let isBombFound = false;
   for (let r = -1; r < 2; r += 1) {
     for (let c = -1; c < 2; c += 1) {
       const tR = rowIndex + r;
       const tC = colIndex + c;
       if (tR >= 0 && tC >= 0 && tR < rows && tC < columns && (tC !== colIndex || tR !== rowIndex)) {
         const o = grid[tR][tC];
-        // check for bomb !!
-        if (!o.isOpen && !o.isFlagged && o.number !== -1) {
-          // check for bomb !!
+        if (o.number === -1 && !o.isFlagged) {
+          isBombFound = true;
+          break;
+        } else if (!o.isOpen && !o.isFlagged) {
           if (o.number === 0) {
             const { opened: c } = openCell(tR, tC, grid, rows, columns, 0);
             openCount += c;
@@ -157,7 +163,7 @@ const openSurrounding = (
       }
     }
   }
-  return { grid, openCount: openCount };
+  return { openCount, isBombFound };
 };
 
 export const gridSlice = createSlice({
@@ -199,41 +205,55 @@ export const gridSlice = createSlice({
             })
           );
         fillbombs(rows, columns, totalBombs, g);
-        fillDigits(rows, columns, g);
         state.gameStatus.isStarted = true;
-        state.gridCells = g;
+        const tempGrid = fillDigits(rows, columns, g);
+        state.gridCells = tempGrid;
       }
     },
     handleCellOpen: (state, action: PayloadAction<CellIndex>) => {
       // check for bomb !
-      const currentGrid = [...state.gridCells];
       const { rowIndex, colIndex } = action.payload;
-      const clickCell = { ...currentGrid[rowIndex][colIndex] };
+      const clickCell = state.gridCells[rowIndex][colIndex];
       if (clickCell.number === -1) {
-        // state.isGameEnded = true;
+        state.gameStatus.isEnded = true;
+        state.gameStatus.isWin = false;
+      } else if (clickCell?.number !== 0) {
+        clickCell.isOpen = true;
+        state.gridCells[rowIndex][colIndex] = clickCell;
+        state.gridCells = state.gridCells;
+        state.totalOpened += 1;
+        if (state.rows * state.columns - state.totalBombs === state.totalOpened) {
+          state.gameStatus.isEnded = true;
+          state.gameStatus.isWin = true;
+        }
       } else {
-        if (clickCell?.number !== 0) {
-          clickCell.isOpen = true;
-          currentGrid[rowIndex][colIndex] = clickCell;
-          state.gridCells = currentGrid;
-          state.totalOpened += 1;
-        } else {
-          const temp = openCell(rowIndex, colIndex, currentGrid, state.rows, state.columns, state.totalOpened);
-          state.totalOpened = temp.opened;
+        const temp = openCell(rowIndex, colIndex, state.gridCells, state.rows, state.columns, state.totalOpened);
+        state.totalOpened = temp.opened;
+        if (state.rows * state.columns - state.totalBombs === state.totalOpened) {
+          state.gameStatus.isEnded = true;
+          state.gameStatus.isWin = true;
         }
       }
     },
     handleCellDoubleClick: (state, action: PayloadAction<CellIndex>) => {
       const { rowIndex, colIndex } = action.payload;
-      const { grid: _grid, openCount } = openSurrounding(
+      const { openCount, isBombFound } = openSurrounding(
         rowIndex,
         colIndex,
-        [...state.gridCells],
+        state.gridCells,
         state.rows,
         state.columns
       );
-      state.gridCells = _grid;
-      state.totalOpened += openCount;
+      if (isBombFound) {
+        state.gameStatus.isEnded = true;
+        state.gameStatus.isWin = false;
+      } else {
+        state.totalOpened += openCount;
+        if (state.rows * state.columns - state.totalBombs === state.totalOpened) {
+          state.gameStatus.isEnded = true;
+          state.gameStatus.isWin = true;
+        }
+      }
     },
     handleCellFlagging: (state, action: PayloadAction<CellIndex>) => {
       const currentGrid = [...state.gridCells];
